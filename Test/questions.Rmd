@@ -1,0 +1,165 @@
+---
+title: "Tests: Questions"
+output: html_document
+---
+
+## Test 01: Differential Expression Analysis
+
+Goal: This test focuses on the main differential expression analysis workflow in the project.
+
+Students should practice:
+
+- reading DEG result files
+- creating new columns from existing columns
+- using logical conditions to classify genes
+- reproducing the main ideas from the DEG and volcano scripts
+
+```{r setup, include=FALSE}
+cur <- tryCatch(knitr::current_input(), error = function(e) NULL)
+path <- if (is.null(cur)) NULL else if (is.character(cur)) cur else cur[["path"]]
+if (!is.null(path) && length(path) > 0) {
+  project_root <- normalizePath(file.path(dirname(path[1]), ".."), mustWork = FALSE)
+} else {
+  wd <- getwd()
+  project_root <- if (dir.exists(file.path(wd, "Data"))) wd else normalizePath(file.path(wd, ".."), mustWork = FALSE)
+}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
+library(dplyr)
+deg_res <- read.csv(file.path(project_root, "Results", "02_DEG", "Tumor_vs_normal.csv"), row.names = 1)
+```
+
+## Question 1
+
+Inspect the DEG result table.
+
+Tasks:
+
+- print `dim(deg_res)`
+- print the first 6 column names
+- show the first 3 rows of `deg_res[, 1:5]`
+
+Hint: You can use functions such as `dim()`, `names()`, and `head()`. Column subsetting with `[rows, columns]` may also be useful.
+
+```{r q1}
+# TODO
+```
+
+## Question 2
+
+Create a new column called `log10FDR`.
+
+Rule:
+
+- `log10FDR = -log10(adj.P.Val)`
+
+Hint: You can create a new column with the column access operator, use `log10()` for the transformation, and use logical conditions with `&` to classify rows. `table()` can help summarize category counts.
+
+```{r q2}
+# TODO
+```
+
+## Question 3
+
+Keep only significant genes and show the top 5 genes with the largest positive `logFC`.
+
+Tasks:
+
+- create `deg_only` using `DEG != "NotSig"`
+- print `dim(deg_only)`
+- print the top 5 rows sorted by `desc(logFC)`
+
+Hint: Functions from `dplyr`, such as `filter()` and `arrange()`, are useful here. You can use `desc()` for decreasing order and `head()` to keep only a few rows.
+
+```{r q3}
+# TODO
+```
+
+## Short Answer
+
+In 2 to 3 sentences, explain:
+
+- what the `DEG` column means
+- why we classify genes into `Up`, `Down`, and `NotSig` before plotting
+
+## Test 02: Enrichment Analysis
+
+Goal: This test focuses on the GSEA workflow in the project.
+
+Students should practice:
+
+- reading GSEA result tables
+- extracting important columns
+- comparing different GSEA outputs
+- explaining what a GSEA result means in simple language
+
+```{r setup_02, include=FALSE}
+cur <- tryCatch(knitr::current_input(), error = function(e) NULL)
+path <- if (is.null(cur)) NULL else if (is.character(cur)) cur else cur[["path"]]
+if (!is.null(path) && length(path) > 0) {
+  project_root <- normalizePath(file.path(dirname(path[1]), ".."), mustWork = FALSE)
+} else {
+  wd <- getwd()
+  project_root <- if (dir.exists(file.path(wd, "Data"))) wd else normalizePath(file.path(wd, ".."), mustWork = FALSE)
+}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
+library(dplyr)
+gsea_go <- read.csv(file.path(project_root, "Results", "04_Enrichment", "GSEA_GO.csv"))
+gsea_kegg <- read.csv(file.path(project_root, "Results", "04_Enrichment", "GSEA_KEGG.csv"))
+hallmark <- read.csv(file.path(project_root, "Results", "04_Enrichment", "Hallmark_GSEA.csv"))
+```
+
+## Question 1
+
+Inspect the three GSEA result tables.
+
+Tasks:
+
+- print `dim(gsea_go)`
+- print `dim(gsea_kegg)`
+- print `dim(hallmark)`
+- print the first 3 descriptions from `gsea_go`
+
+Hint: Use `dim()` to inspect table size. Use the column access operator to access one column, and `head()` to show the first few values.
+
+```{r q1_02}
+# TODO
+```
+
+## Question 2
+
+Extract key columns from GSEA GO and GSEA KEGG results.
+
+Tasks:
+
+- from `gsea_go`, keep `Description`, `NES`, `p.adjust`, and `setSize`
+- from `gsea_kegg`, sort by `p.adjust` from small to large
+- print the first 5 pathway descriptions from the sorted GSEA KEGG table
+
+Hint: `select()` can keep specific columns, and `arrange()` can sort rows. Access the `Description` column when you only want the pathway names.
+
+```{r q2_02}
+# TODO
+```
+
+## Question 3
+
+Use Hallmark GSEA results to compare positive and negative enrichment.
+
+Tasks:
+
+- create `hallmark_positive` using `NES > 0`
+- create `hallmark_negative` using `NES < 0`
+- print the first 5 descriptions from each table
+
+Hint: Use `filter()` with conditions on `NES` to split positive and negative enrichment. Then inspect the `Description` column with `head()`.
+
+```{r q3_02}
+# TODO
+```
+
+## Short Answer
+
+In 2 to 3 sentences, explain:
+
+- what a positive `NES` usually suggests
+- why GSEA results are often sorted by adjusted p value

@@ -1,0 +1,171 @@
+---
+title: "Tests: Answers"
+output: html_document
+---
+
+## Test 01: Differential Expression Analysis
+
+Goal: This test focuses on the main differential expression analysis workflow in the project.
+
+Students should practice:
+
+- reading DEG result files
+- creating new columns from existing columns
+- using logical conditions to classify genes
+- reproducing the main ideas from the DEG and volcano scripts
+
+```{r setup, include=FALSE}
+cur <- tryCatch(knitr::current_input(), error = function(e) NULL)
+path <- if (is.null(cur)) NULL else if (is.character(cur)) cur else cur[["path"]]
+if (!is.null(path) && length(path) > 0) {
+  project_root <- normalizePath(file.path(dirname(path[1]), ".."), mustWork = FALSE)
+} else {
+  wd <- getwd()
+  project_root <- if (dir.exists(file.path(wd, "Data"))) wd else normalizePath(file.path(wd, ".."), mustWork = FALSE)
+}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
+library(dplyr)
+deg_res <- read.csv(file.path(project_root, "Results", "02_DEG", "Tumor_vs_normal.csv"), row.names = 1)
+```
+
+## Question 1
+
+Inspect the DEG result table.
+
+Tasks:
+
+- print `dim(deg_res)`
+- print the first 6 column names
+- show the first 3 rows of `deg_res[, 1:5]`
+
+```{r q1}
+dim(deg_res)
+names(deg_res)[1:6]
+head(deg_res[, 1:5], 3)
+```
+
+## Question 2
+
+Create a new column called `log10FDR`.
+
+Rule:
+
+- `log10FDR = -log10(adj.P.Val)`
+
+```{r q2}
+deg_res$log10FDR <- -log10(deg_res$adj.P.Val)
+deg_res$DEG <- "NotSig"
+deg_res$DEG[deg_res$logFC > 1 & deg_res$adj.P.Val < 0.05] <- "Up"
+deg_res$DEG[deg_res$logFC < -1 & deg_res$adj.P.Val < 0.05] <- "Down"
+table(deg_res$DEG)
+```
+
+## Question 3
+
+Keep only significant genes and show the top 5 genes with the largest positive `logFC`.
+
+Tasks:
+
+- create `deg_only` using `DEG != "NotSig"`
+- print `dim(deg_only)`
+- print the top 5 rows sorted by `desc(logFC)`
+
+```{r q3}
+deg_only <- deg_res %>% filter(DEG != "NotSig")
+dim(deg_only)
+deg_only %>%
+  arrange(desc(logFC)) %>%
+  head(5)
+```
+
+## Short Answer
+
+The `DEG` column is a simple label that classifies each gene based on both the direction of change and the significance threshold. `Up` means strongly upregulated in tumor, `Down` means strongly downregulated in tumor, and `NotSig` means the gene does not pass the chosen cutoff.
+
+We classify genes before plotting so the volcano plot can separate biologically meaningful changes from background points. This makes the figure easier to read and helps highlight the most important upregulated and downregulated genes.
+
+## Test 02: Enrichment Analysis
+
+Goal: This test focuses on the GSEA workflow in the project.
+
+Students should practice:
+
+- reading GSEA result tables
+- extracting important columns
+- comparing different GSEA outputs
+- explaining what a GSEA result means in simple language
+
+```{r setup_02, include=FALSE}
+cur <- tryCatch(knitr::current_input(), error = function(e) NULL)
+path <- if (is.null(cur)) NULL else if (is.character(cur)) cur else cur[["path"]]
+if (!is.null(path) && length(path) > 0) {
+  project_root <- normalizePath(file.path(dirname(path[1]), ".."), mustWork = FALSE)
+} else {
+  wd <- getwd()
+  project_root <- if (dir.exists(file.path(wd, "Data"))) wd else normalizePath(file.path(wd, ".."), mustWork = FALSE)
+}
+knitr::opts_chunk$set(echo = TRUE, message = TRUE, warning = TRUE)
+library(dplyr)
+gsea_go <- read.csv(file.path(project_root, "Results", "04_Enrichment", "GSEA_GO.csv"))
+gsea_kegg <- read.csv(file.path(project_root, "Results", "04_Enrichment", "GSEA_KEGG.csv"))
+hallmark <- read.csv(file.path(project_root, "Results", "04_Enrichment", "Hallmark_GSEA.csv"))
+```
+
+## Question 1
+
+Inspect the three GSEA result tables.
+
+Tasks:
+
+- print `dim(gsea_go)`
+- print `dim(gsea_kegg)`
+- print `dim(hallmark)`
+- print the first 3 descriptions from `gsea_go`
+
+```{r q1_02}
+dim(gsea_go)
+dim(gsea_kegg)
+dim(hallmark)
+head(gsea_go$Description, 3)
+```
+
+## Question 2
+
+Extract key columns from GSEA GO and GSEA KEGG results.
+
+Tasks:
+
+- from `gsea_go`, keep `Description`, `NES`, `p.adjust`, and `setSize`
+- from `gsea_kegg`, sort by `p.adjust` from small to large
+- print the first 5 pathway descriptions from the sorted GSEA KEGG table
+
+```{r q2_02}
+gsea_go_small <- gsea_go %>% select(Description, NES, p.adjust, setSize)
+head(gsea_go_small, 5)
+
+gsea_kegg_sorted <- gsea_kegg %>% arrange(p.adjust)
+head(gsea_kegg_sorted$Description, 5)
+```
+
+## Question 3
+
+Use Hallmark GSEA results to compare positive and negative enrichment.
+
+Tasks:
+
+- create `hallmark_positive` using `NES > 0`
+- create `hallmark_negative` using `NES < 0`
+- print the first 5 descriptions from each table
+
+```{r q3_02}
+hallmark_positive <- hallmark %>% filter(NES > 0)
+hallmark_negative <- hallmark %>% filter(NES < 0)
+head(hallmark_positive$Description, 5)
+head(hallmark_negative$Description, 5)
+```
+
+## Short Answer
+
+A positive `NES` usually suggests that genes in that pathway tend to appear near the top of the ranked list, which often indicates relative activation or upregulation in the target condition. A negative `NES` suggests the pathway is enriched toward the lower end of the ranked list, which often reflects relative suppression.
+
+GSEA results are often sorted by adjusted p value because many pathways are tested at the same time. Ranking by adjusted p value helps prioritize the most statistically reliable pathways after multiple-testing correction.
